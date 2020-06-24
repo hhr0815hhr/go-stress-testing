@@ -39,7 +39,7 @@ func main() {
 	var (
 		concurrency uint64 // 并发数
 		totalNumber uint64 // 请求数(单个并发/协程)
-		debugStr    string // 是否是debug
+		debug       bool   // 是否是debug
 		requestUrl  string // 压测的url 目前支持，http/https ws/wss
 		path        string // curl文件路径 http接口压测，自定义参数设置
 		verify      string // verify 验证方法 在server/verify中 http 支持:statusCode、json webSocket支持:json
@@ -49,7 +49,7 @@ func main() {
 
 	flag.Uint64Var(&concurrency, "c", 1, "并发数")
 	flag.Uint64Var(&totalNumber, "n", 1, "请求数(单个并发/协程)")
-	flag.StringVar(&debugStr, "d", "false", "调试模式")
+	flag.BoolVar(&debug, "d", false, "调试模式")
 	flag.StringVar(&requestUrl, "u", "", "压测地址")
 	flag.StringVar(&path, "p", "", "curl文件路径")
 	flag.StringVar(&verify, "v", "", "验证方法 http 支持:statusCode、json webSocket支持:json")
@@ -59,16 +59,19 @@ func main() {
 	// 解析参数
 	flag.Parse()
 	if concurrency == 0 || totalNumber == 0 || (requestUrl == "" && path == "") {
+		var debugStr string
+		if debug {
+			debugStr = "-d"
+		}
 		fmt.Printf("示例: go run main.go -c 1 -n 1 -u https://www.baidu.com/ \n")
 		fmt.Printf("压测地址或curl路径必填 \n")
-		fmt.Printf("当前请求参数: -c %d -n %d -d %v -u %s \n", concurrency, totalNumber, debugStr, requestUrl)
+		fmt.Printf("当前请求参数: -c %d -n %d %s -u %s \n", concurrency, totalNumber, debugStr, requestUrl)
 
 		flag.Usage()
 
 		return
 	}
 
-	debug := strings.ToLower(debugStr) == "true"
 	request, err := model.NewRequest(requestUrl, verify, 0, debug, path, headers, body)
 	if err != nil {
 		fmt.Printf("参数不合法 %v \n", err)
